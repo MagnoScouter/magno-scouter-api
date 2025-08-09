@@ -1,16 +1,13 @@
-from flask_cors import CORS  # <--- importar
-
-app = Flask(__name__)
-CORS(app)  # <--- habilita CORS
-
-
+from flask import Flask, jsonify, request
+from flask_cors import CORS
 import os, random, time, re
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-from flask import Flask, jsonify, request
 
+# --- App & CORS (uma única vez) ---
 app = Flask(__name__)
+CORS(app)
 
 # ---------- CONFIG ----------
 HEADERS = {
@@ -95,7 +92,6 @@ def parse_flashscore_match(url):
             team_stats["home"]["cards_red"] = hv
             team_stats["away"]["cards_red"] = av
         elif "possession" in key:
-            # posse pode ser útil mas não vai para team_stats por padrão
             data["possession"] = {"home": hv, "away": av}
         elif "goals" in key:
             team_stats["home"]["goals"] = hv
@@ -137,7 +133,6 @@ def search():
     sport = (request.args.get("sport") or "football").strip()
     if not q:
         return jsonify({"q": q, "results": []}), 200
-    # Stub para o fluxo de Ações: retornamos candidatos
     return jsonify({
         "q": q, "sport": sport,
         "results": [
@@ -154,14 +149,12 @@ def get_stats():
     if not match_url:
         return jsonify({"status": "error", "error": "URL não fornecida."}), 400
 
-    # tenta flashscore
     stats = parse_flashscore_match(match_url)
     if stats:
         stats["sport"] = sport
         stats.setdefault("notes", []).append("flashscore parsed")
         return jsonify({"status":"ok", **stats}), 200
 
-    # fallbacks
     for fb in FALLBACK_URLS:
         fb_data = parse_fallback_source(fb)
         if fb_data:
@@ -169,9 +162,12 @@ def get_stats():
 
     return jsonify({"status":"error", "error": "Falha ao obter estatísticas de todas as fontes."}), 502
 
-
 # Execução local apenas
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
+
+
+
 
