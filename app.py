@@ -1,3 +1,9 @@
+from flask_cors import CORS  # <--- importar
+
+app = Flask(__name__)
+CORS(app)  # <--- habilita CORS
+
+
 import os, random, time, re
 import requests
 from bs4 import BeautifulSoup
